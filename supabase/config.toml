@@ -45,10 +45,18 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 
-# Plantillas de correo con la marca MisanRD.
-# NOTA: personalizar templates requiere un proveedor SMTP propio (o plan de pago).
-# Con el correo por defecto del tier gratuito, `supabase config push` las rechaza.
-# Configura [auth.email.smtp] (ver README) y luego `supabase config push` las aplica.
+# Proveedor SMTP propio (Resend). La clave se pasa como env al hacer config push:
+#   SMTP_PASSWORD="re_..." supabase config push
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SMTP_PASSWORD)"
+admin_email = "onboarding@resend.dev"
+sender_name = "MisanRD"
+
+# Plantillas de correo con la marca MisanRD (se aplican con SMTP configurado).
 [auth.email.template.confirmation]
 subject = "Confirma tu cuenta en MisanRD 🎉"
 content_path = "./supabase/templates/confirmation.html"
