@@ -159,6 +159,37 @@ src/
 
 ---
 
+## ✉️ Correos (confirmación, recuperación) y SMTP
+
+El **Site URL** del proyecto hosted debe apuntar al sitio desplegado para que los
+enlaces de los correos funcionen. Ya está configurado vía `supabase/config.toml`
+(`[auth].site_url`) + `supabase config push`.
+
+Las **plantillas de correo con marca MisanRD** están en `supabase/templates/`
+(confirmación, recuperación, enlace mágico). Para aplicarlas necesitas un
+**proveedor SMTP propio** (el correo por defecto del tier gratuito no permite
+personalizar plantillas y está limitado a pocos envíos por hora):
+
+1. Crea una cuenta en [Resend](https://resend.com) (u otro: SendGrid, Brevo…) y
+   obtén una API key + un remitente verificado.
+2. Agrega a `supabase/config.toml`:
+   ```toml
+   [auth.email.smtp]
+   host = "smtp.resend.com"
+   port = 465
+   user = "resend"
+   pass = "env(SMTP_PASSWORD)"
+   admin_email = "no-responder@tudominio.com"
+   sender_name = "MisanRD"
+   ```
+3. Aplica SMTP + plantillas:
+   ```bash
+   SMTP_PASSWORD="tu_api_key" supabase config push
+   ```
+
+Para pruebas rápidas sin SMTP, puedes desactivar la confirmación de correo en
+**Authentication → Providers → Email** (el registro entra directo al onboarding).
+
 ## ⚠️ Limitaciones conocidas / próximos pasos
 
 - **Suscripciones:** el plan se guarda y sus límites se aplican, pero el cambio de plan es manual (sin pasarela de pago).

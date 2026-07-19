@@ -24,14 +24,16 @@ port = 54324
 
 [storage]
 enabled = true
-file_size_limit = "10MiB"
+file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
+# Site URL del proyecto HOSTED (a donde apuntan los correos de confirmación).
+site_url = "https://robertochacon.github.io/MisanRD/"
 additional_redirect_urls = [
+  "https://robertochacon.github.io/MisanRD/",
+  "https://robertochacon.github.io/MisanRD",
   "http://localhost:5173",
-  "https://localhost:5173",
 ]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
@@ -42,6 +44,22 @@ enable_signup = true
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
+
+# Plantillas de correo con la marca MisanRD.
+# NOTA: personalizar templates requiere un proveedor SMTP propio (o plan de pago).
+# Con el correo por defecto del tier gratuito, `supabase config push` las rechaza.
+# Configura [auth.email.smtp] (ver README) y luego `supabase config push` las aplica.
+[auth.email.template.confirmation]
+subject = "Confirma tu cuenta en MisanRD 🎉"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Restablece tu contraseña — MisanRD"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Tu enlace de acceso a MisanRD"
+content_path = "./supabase/templates/magic_link.html"
 
 [edge_runtime]
 enabled = true
