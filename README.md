@@ -134,6 +134,7 @@ Con **N** participantes y cuota **C**:
 supabase/
   migrations/    0001 esquema · 0002 funciones/triggers · 0003 RLS · 0004 storage
                  · 0005 endurecimiento de seguridad · 0006 invitación de admins
+                 · 0007 endurecimiento de invitaciones
   functions/portal/   Edge Function del portal del participante
   seed.sql       datos demo
 src/

@@ -230,7 +230,7 @@ export function SettingsPage() {
 }
 
 function TeamCard() {
-  const { tenant, plan } = useAuth()
+  const { tenant, plan, profile } = useAuth()
   const toast = useToast()
   const { data: members } = useTeamMembers()
   const { data: invites } = usePendingInvites()
@@ -238,6 +238,8 @@ function TeamCard() {
   const revokeInvite = useRevokeInvite()
 
   const isPremium = plan.code === 'premium'
+  const isOwner = profile?.role === 'owner'
+  const canInvite = isPremium && isOwner
   const registerUrl = `${PUBLIC_URL}/#/registro`
 
   const invite = async () => {
@@ -265,15 +267,15 @@ function TeamCard() {
         title="Administradores"
         subtitle="Personas que pueden gestionar esta cuenta"
         action={
-          isPremium ? (
+          canInvite ? (
             <Button size="sm" onClick={invite} loading={createInvite.isPending}>
               <UserPlus className="h-4 w-4" /> Invitar
             </Button>
-          ) : (
+          ) : !isPremium ? (
             <Badge tone="gold">
               <Crown className="h-3.5 w-3.5" /> Premium
             </Badge>
-          )
+          ) : null
         }
       />
       <CardBody className="space-y-4">
@@ -297,7 +299,7 @@ function TeamCard() {
             <Lock className="h-5 w-5 shrink-0 text-slate-400" />
             Agrega más administradores con el plan <span className="font-semibold">Premium</span>.
           </div>
-        ) : invites && invites.length > 0 ? (
+        ) : !isOwner ? null : invites && invites.length > 0 ? (
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Invitaciones pendientes
