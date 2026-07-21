@@ -17,7 +17,7 @@ export function AuthLayout({
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-to-b from-brand-50 via-white to-white px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <Logo className="h-24 w-24" />
+          <Logo className="h-32 w-32" />
           <p className="mt-1 text-sm font-medium text-brand-500">{APP_TAGLINE}</p>
         </div>
 
