@@ -25,6 +25,7 @@ export interface Tenant {
   signature_url: string | null
   currency: string
   receipt_seq: number
+  suspended_at: string | null
   created_at: string
   updated_at: string
 }
@@ -177,6 +178,7 @@ export interface AdminTenantRow {
   created_at: string
   whatsapp: string | null
   currency: string
+  suspended: boolean
   plan: PlanCode | null
   sub_status: SubscriptionStatus | null
   trial_ends_at: string | null
@@ -187,6 +189,33 @@ export interface AdminTenantRow {
   active_sanes: number
   total_sanes: number
   collected_total: number
+}
+
+export interface AdminMember {
+  id: string
+  full_name: string | null
+  role: MemberRole
+  created_at: string
+  email: string | null
+  banned: boolean
+}
+
+export interface PlatformAdminRow {
+  user_id: string
+  email: string | null
+  note: string | null
+  created_at: string
+}
+
+export interface AdminTenantSummary {
+  active_sanes: number
+  completed_sanes: number
+  draft_sanes: number
+  total_participants: number
+  pending_amount: number
+  collected_total: number
+  overdue_installments: number
+  morosos_count: number
 }
 
 export interface DashboardSummary {

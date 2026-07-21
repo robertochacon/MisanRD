@@ -23,6 +23,7 @@ const ReportsPage = lazy(() => import('@/features/reports/ReportsPage').then((m)
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const PortalPage = lazy(() => import('@/features/portal/PortalPage').then((m) => ({ default: m.PortalPage })))
 const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
+const AdminTenantDetail = lazy(() => import('@/features/admin/AdminTenantDetail').then((m) => ({ default: m.AdminTenantDetail })))
 
 function FullLoader() {
   return (
@@ -44,6 +45,24 @@ function PublicOnly({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** Pantalla de bloqueo para negocios suspendidos por la plataforma. */
+function SuspendedScreen() {
+  const { tenant, signOut } = useAuth()
+  return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center">
+      <Logo className="h-14 w-14 opacity-70" />
+      <h1 className="text-lg font-bold text-slate-900">Cuenta suspendida</h1>
+      <p className="max-w-sm text-sm text-slate-500">
+        El acceso a <span className="font-medium">{tenant?.name}</span> está temporalmente suspendido.
+        Contacta al administrador de la plataforma para reactivarlo.
+      </p>
+      <button onClick={() => signOut()} className="text-sm font-medium text-brand-600 hover:underline">
+        Cerrar sesión
+      </button>
+    </div>
+  )
+}
+
 /** Requiere sesión + tenant configurado. */
 function ProtectedLayout() {
   const { loading, user, needsOnboarding, isPlatformAdmin, tenant } = useAuth()
@@ -52,16 +71,17 @@ function ProtectedLayout() {
   // Super-admin sin negocio propio → su lugar es el panel de plataforma.
   if (isPlatformAdmin && !tenant) return <Navigate to="/admin" replace />
   if (needsOnboarding) return <Navigate to="/bienvenida" replace />
+  if (tenant?.suspended_at) return <SuspendedScreen />
   return <Layout />
 }
 
 /** Requiere sesión + ser super-admin de plataforma. */
-function PlatformAdminGuard() {
+function RequirePlatformAdmin({ children }: { children: ReactNode }) {
   const { loading, user, isPlatformAdmin } = useAuth()
   if (loading) return <FullLoader />
   if (!user) return <Navigate to="/login" replace />
   if (!isPlatformAdmin) return <Navigate to="/" replace />
-  return <AdminPage />
+  return <>{children}</>
 }
 
 /** Paso de onboarding (sesión sin tenant). */
@@ -86,7 +106,8 @@ export default function App() {
         <Route path="/bienvenida" element={<OnboardingGuard />} />
 
         {/* Panel de plataforma (super-admin, cross-tenant) */}
-        <Route path="/admin" element={<PlatformAdminGuard />} />
+        <Route path="/admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
+        <Route path="/admin/negocio/:id" element={<RequirePlatformAdmin><AdminTenantDetail /></RequirePlatformAdmin>} />
 
         {/* App protegida */}
         <Route element={<ProtectedLayout />}>
