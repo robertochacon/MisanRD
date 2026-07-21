@@ -1,22 +1,96 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-DO">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="./icons/favicon-32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1E63F0" />
+
+    <!-- SEO principal -->
+    <title>MisanRD — Administra tus Sanes y ahorros (SUSU) en RD</title>
     <meta
       name="description"
-      content="MisanRD — Administra tus Sanes (SUSU) desde el celular: participantes, cuotas, pagos, morosos, entregas y recibos."
+      content="App para administrar Sanes (SUSU) y ahorros en grupo en República Dominicana: participantes, cuotas, pagos, morosos, entregas y recibos, todo desde el celular."
     />
+    <meta
+      name="keywords"
+      content="san, sanes, sans, san dominicano, SUSU, ahorro, ahorrar, ahorro en grupo, ahorro colectivo, junta, cundina, tanda, administrar san, app de sanes, cuotas, morosos, República Dominicana"
+    />
+    <meta name="author" content="MisanRD" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#1E63F0" />
+    <link rel="canonical" href="https://misanrd.com/" />
+
+    <!-- Íconos -->
+    <link rel="icon" type="image/png" href="/icons/favicon-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/icons/favicon-16.png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MisanRD" />
+    <meta property="og:locale" content="es_DO" />
+    <meta property="og:url" content="https://misanrd.com/" />
+    <meta property="og:title" content="MisanRD — Administra tus Sanes y ahorros" />
+    <meta
+      property="og:description"
+      content="Lleva tus Sanes (SUSU) y ahorros en grupo desde el celular: participantes, cuotas, pagos, morosos y recibos. Hecho para República Dominicana."
+    />
+    <meta property="og:image" content="https://misanrd.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MisanRD — app para administrar sanes y ahorros" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MisanRD — Administra tus Sanes y ahorros" />
+    <meta
+      name="twitter:description"
+      content="Lleva tus Sanes (SUSU) y ahorros en grupo desde el celular. Hecho para República Dominicana."
+    />
+    <meta name="twitter:image" content="https://misanrd.com/og.png" />
+
+    <!-- Geo (República Dominicana) -->
+    <meta name="geo.region" content="DO" />
+    <meta name="geo.placename" content="República Dominicana" />
+
+    <!-- Fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <title>MisanRD — Tus sans, más fácil</title>
+
+    <!-- Datos estructurados: Google entiende que es una app financiera para RD -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "MisanRD",
+            "url": "https://misanrd.com/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web, Android, iOS",
+            "inLanguage": "es-DO",
+            "description": "App para administrar Sanes (SUSU) y ahorros en grupo en República Dominicana: participantes, cuotas, pagos, morosos, entregas y recibos.",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "DOP" },
+            "areaServed": { "@type": "Country", "name": "República Dominicana" }
+          },
+          {
+            "@type": "Organization",
+            "name": "MisanRD",
+            "url": "https://misanrd.com/",
+            "logo": "https://misanrd.com/icons/pwa-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "name": "MisanRD",
+            "url": "https://misanrd.com/",
+            "inLanguage": "es-DO"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

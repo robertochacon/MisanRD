@@ -71,6 +71,34 @@ async function main() {
     .toFile(path.join(root, 'public', 'logo.png'))
   console.log('✓ logo.png')
 
+  // Imagen social (Open Graph / Twitter) 1200x630 para previews al compartir
+  // (WhatsApp, Facebook, etc.). Logo a la izquierda + texto de marca.
+  const OG_W = 1200
+  const OG_H = 630
+  const ogLogoSize = 300
+  const ogLogo = await sharp(SRC)
+    .resize(ogLogoSize, ogLogoSize, { fit: 'contain', background: WHITE })
+    .flatten({ background: WHITE })
+    .png()
+    .toBuffer()
+
+  const ogSvg = `<svg width="${OG_W}" height="${OG_H}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100%" height="100%" fill="#ffffff"/>
+    <rect x="0" y="0" width="14" height="${OG_H}" fill="#1E63F0"/>
+    <g font-family="DejaVu Sans, Arial, Helvetica, sans-serif">
+      <text x="470" y="252" font-size="94" font-weight="800" fill="#1E63F0">MisanRD</text>
+      <text x="472" y="322" font-size="42" font-weight="700" fill="#0F172A">Sanes y ahorros, más fácil</text>
+      <text x="472" y="382" font-size="27" font-weight="500" fill="#64748B">Participantes · cuotas · pagos · morosos · recibos</text>
+      <text x="472" y="452" font-size="28" font-weight="700" fill="#1E63F0">República Dominicana</text>
+    </g>
+  </svg>`
+
+  await sharp(Buffer.from(ogSvg))
+    .composite([{ input: ogLogo, left: 100, top: Math.round((OG_H - ogLogoSize) / 2) }])
+    .png()
+    .toFile(path.join(root, 'public', 'og.png'))
+  console.log('✓ og.png')
+
   console.log('\nÍconos generados en public/icons ✅')
 }
 
