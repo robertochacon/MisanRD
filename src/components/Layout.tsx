@@ -9,6 +9,7 @@ import {
   PackageCheck,
   BarChart3,
   Settings,
+  GraduationCap,
   LogOut,
   Menu,
   X,
@@ -30,6 +31,7 @@ const nav = [
   { to: '/entregas', label: 'Entregas', icon: PackageCheck },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/configuracion', label: 'Configuración', icon: Settings },
+  { to: '/tutorial', label: 'Tutorial', icon: GraduationCap, disabled: true },
 ]
 
 const bottomNav = [nav[0], nav[1], nav[3], nav[4]]
@@ -167,13 +169,28 @@ function NavItem({
   icon: Icon,
   end,
   onClick,
+  disabled,
 }: {
   to: string
   label: string
   icon: typeof Coins
   end?: boolean
   onClick?: () => void
+  disabled?: boolean
 }) {
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        title="Próximamente"
+        className="flex cursor-not-allowed select-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400"
+      >
+        <Icon className="h-5 w-5" />
+        <span className="flex-1">{label}</span>
+        <Badge tone="gray">Pronto</Badge>
+      </div>
+    )
+  }
   return (
     <NavLink
       to={to}
