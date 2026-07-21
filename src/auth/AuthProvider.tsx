@@ -10,6 +10,8 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { queryClient } from '@/lib/queryClient'
+import { clearOfflineCache, flushOfflineQueue, resumeIfAuthed } from '@/lib/offline'
 import { PLANS, type PlanInfo } from '@/lib/constants'
 import type { Profile, Subscription, Tenant } from '@/types/db'
 
@@ -88,11 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session)
       await loadContext(data.session?.user?.id)
       if (mounted.current) setLoading(false)
+      // Con sesión ya presente, intenta subir pagos que quedaron en cola.
+      if (data.session) void resumeIfAuthed(queryClient)
     })()
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
       loadContext(newSession?.user?.id)
+      // Tras (re)iniciar sesión, sube la cola offline del mismo usuario.
+      if (newSession) void resumeIfAuthed(queryClient)
     })
 
     return () => {
@@ -102,11 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadContext])
 
   const signOut = useCallback(async () => {
+    // 1) Sube la cola offline mientras el token AÚN es válido (si hay red).
+    await flushOfflineQueue(queryClient)
+    // 2) Revoca la sesión.
     await supabase.auth.signOut()
     setProfile(null)
     setTenant(null)
     setSubscription(null)
     setIsPlatformAdmin(false)
+    // 3) Limpia SOLO las lecturas (higiene). clearOfflineCache CONSERVA la cola de
+    //    pagos sin subir para no perder dinero: se reintenta en el próximo login.
+    await clearOfflineCache(queryClient)
   }, [])
 
   const value = useMemo<AuthState>(() => {

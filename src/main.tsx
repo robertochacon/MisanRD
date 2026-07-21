@@ -1,20 +1,44 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import App from './App'
 import './index.css'
 import { queryClient } from '@/lib/queryClient'
+import { persister, registerOfflineMutations, resumeIfAuthed } from '@/lib/offline'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { ToastProvider } from '@/components/ui/toast'
 
+// Registra los defaults de las mutaciones offline ANTES de montar la app, para
+// que las que estén en cola puedan reanudarse tras recargar.
+registerOfflineMutations(queryClient)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: 1000 * 60 * 60 * 24 * 14, // 14 días
+        // OJO: cambiar el buster descarta TODO el cache persistido, INCLUIDA la
+        // cola de pagos offline sin subir. No lo cambies en un deploy si puede
+        // haber pagos en cola en dispositivos de cobradores.
+        buster: 'misanrd-v1',
+        dehydrateOptions: {
+          // Persistir solo las mutaciones en cola (pausadas por falta de red).
+          shouldDehydrateMutation: (m) => m.state.isPaused,
+        },
+      }}
+      onSuccess={() => {
+        // Cache restaurado → sube la cola SOLO si ya hay sesión (si no, se queda
+        // pausada hasta el login para no correr como anon y perder el pago).
+        void resumeIfAuthed(queryClient)
+      }}
+    >
       <AuthProvider>
         <ToastProvider>
           <App />
         </ToastProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </StrictMode>,
 )

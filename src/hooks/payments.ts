@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/auth/AuthProvider'
+import { OFFLINE_PAYMENT_KEY } from '@/lib/offline'
 import type { Installment, Participant, PaymentMethod } from '@/types/db'
 
 export interface InstallmentRow extends Installment {
@@ -27,6 +27,8 @@ export function useSanInstallments(sanId: string | undefined, onlyPending = fals
 }
 
 export interface RegisterPaymentInput {
+  /** Generado en el cliente para idempotencia al sincronizar offline. */
+  id: string
   san_id: string
   installment_id: string | null
   participant_id: string
@@ -34,29 +36,18 @@ export interface RegisterPaymentInput {
   paid_at: string
   method: PaymentMethod
   notes?: string | null
+  tenant_id: string
+  created_by: string | null
 }
 
+/**
+ * Registra un pago. Funciona OFFLINE: la lógica (mutationFn/optimista/idempotencia)
+ * vive en los mutation-defaults registrados en `@/lib/offline`, para que una
+ * mutación en cola se reanude tras recargar. Aquí solo enlazamos por mutationKey.
+ */
 export function useRegisterPayment() {
-  const qc = useQueryClient()
-  const { tenant, user } = useAuth()
-  return useMutation({
-    mutationFn: async (input: RegisterPaymentInput): Promise<string> => {
-      if (!tenant) throw new Error('Sin tenant')
-      const { data, error } = await supabase
-        .from('payments')
-        .insert({ ...input, tenant_id: tenant.id, created_by: user?.id ?? null })
-        .select('id')
-        .single()
-      if (error) throw error
-      return (data as { id: string }).id
-    },
-    onSuccess: (_id, v) => {
-      qc.invalidateQueries({ queryKey: ['installments', v.san_id] })
-      qc.invalidateQueries({ queryKey: ['san', v.san_id] })
-      qc.invalidateQueries({ queryKey: ['payments'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
-      qc.invalidateQueries({ queryKey: ['morosos'] })
-    },
+  return useMutation<string, Error, RegisterPaymentInput>({
+    mutationKey: OFFLINE_PAYMENT_KEY,
   })
 }
 

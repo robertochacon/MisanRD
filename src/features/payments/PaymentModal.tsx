@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Input'
 import { Select, Textarea } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/toast'
+import { useAuth } from '@/auth/AuthProvider'
 import { useRegisterPayment, type InstallmentRow } from '@/hooks/payments'
 import { PAYMENT_METHODS } from '@/lib/constants'
 import { money } from '@/lib/format'
@@ -23,6 +24,7 @@ export function PaymentModal({
   onRegistered?: () => void
 }) {
   const toast = useToast()
+  const { tenant, user } = useAuth()
   const register = useRegisterPayment()
   const owed = installment ? Number(installment.amount) - Number(installment.paid_amount) : 0
 
@@ -43,15 +45,22 @@ export function PaymentModal({
 
   if (!installment) return null
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const amt = Number(amount)
     if (!amt || amt <= 0) {
       toast.error('Ingresa un monto válido')
       return
     }
-    try {
-      await register.mutateAsync({
+    if (!tenant) {
+      toast.error('Sin negocio activo')
+      return
+    }
+    // mutate (no mutateAsync): offline la mutación queda EN PAUSA y su promesa no
+    // resolvería; con mutate + onMutate optimista cerramos al instante igual.
+    register.mutate(
+      {
+        id: crypto.randomUUID(),
         san_id: installment.san_id,
         installment_id: installment.id,
         participant_id: installment.participant_id,
@@ -59,13 +68,22 @@ export function PaymentModal({
         paid_at: date,
         method,
         notes: notes || null,
-      })
-      toast.success(`Pago de ${money(amt)} registrado`)
-      onRegistered?.()
-      onClose()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al registrar el pago')
+        tenant_id: tenant.id,
+        created_by: user?.id ?? null,
+      },
+      {
+        // Online: el éxito/error sale del resultado real (no lo afirmamos antes).
+        onSuccess: () => toast.success(`Pago de ${money(amt)} registrado`),
+        onError: (err) =>
+          toast.error(err instanceof Error ? err.message : 'Error al registrar el pago'),
+      },
+    )
+    // Offline: la mutación queda en cola; confirmamos con el optimista aplicado.
+    if (!navigator.onLine) {
+      toast.success(`Pago de ${money(amt)} guardado. Se subirá al recuperar la conexión.`)
     }
+    onRegistered?.()
+    onClose()
   }
 
   return (

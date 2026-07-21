@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/auth/AuthProvider'
 import { Wordmark } from '@/components/Logo'
+import { OfflineBar } from '@/components/OfflineBar'
 import { Avatar } from '@/components/ui/misc'
 import { Badge } from '@/components/ui/Badge'
 
@@ -135,6 +136,8 @@ export function Layout() {
             )}
           </div>
         </header>
+
+        <OfflineBar />
 
         <main className="mx-auto w-full max-w-6xl px-4 py-5 pb-24 lg:pb-8">
           <Outlet />
