@@ -22,6 +22,7 @@ interface AuthState {
   subscription: Subscription | null
   plan: PlanInfo
   needsOnboarding: boolean
+  isPlatformAdmin: boolean
   refresh: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
   const mounted = useRef(true)
   // Contador de generación: descarta resultados de cargas obsoletas (p.ej. si el
   // usuario cambia mientras una carga anterior sigue en vuelo).
@@ -47,16 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       setTenant(null)
       setSubscription(null)
+      setIsPlatformAdmin(false)
       return
     }
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', uid)
-      .maybeSingle()
+    const [{ data: prof }, { data: isAdmin }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
+      supabase.rpc('auth_is_platform_admin'),
+    ])
 
     if (isStale()) return
     setProfile(prof as Profile | null)
+    setIsPlatformAdmin(Boolean(isAdmin))
 
     if (prof?.tenant_id) {
       const [{ data: t }, { data: sub }] = await Promise.all([
@@ -103,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null)
     setTenant(null)
     setSubscription(null)
+    setIsPlatformAdmin(false)
   }, [])
 
   const value = useMemo<AuthState>(() => {
@@ -115,11 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       tenant,
       subscription,
       plan: PLANS[planCode],
-      needsOnboarding: Boolean(session?.user) && !profile?.tenant_id,
+      // El super-admin de plataforma no pertenece a un tenant: no debe caer en onboarding.
+      needsOnboarding: Boolean(session?.user) && !profile?.tenant_id && !isPlatformAdmin,
+      isPlatformAdmin,
       refresh,
       signOut,
     }
-  }, [loading, session, profile, tenant, subscription, refresh, signOut])
+  }, [loading, session, profile, tenant, subscription, isPlatformAdmin, refresh, signOut])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

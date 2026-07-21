@@ -158,6 +158,37 @@ export interface PortalToken {
   created_at: string
 }
 
+// ── Super-admin de plataforma (cross-tenant) ────────────────────────────────
+export interface AdminOverview {
+  tenants: number
+  members: number
+  participants: number
+  active_sanes: number
+  total_sanes: number
+  collected_total: number
+  platform_admins: number
+  by_plan: Partial<Record<PlanCode, number>>
+  by_status: Partial<Record<SubscriptionStatus, number>>
+}
+
+export interface AdminTenantRow {
+  id: string
+  name: string
+  created_at: string
+  whatsapp: string | null
+  currency: string
+  plan: PlanCode | null
+  sub_status: SubscriptionStatus | null
+  trial_ends_at: string | null
+  owner_name: string | null
+  owner_email: string | null
+  members: number
+  participants: number
+  active_sanes: number
+  total_sanes: number
+  collected_total: number
+}
+
 export interface DashboardSummary {
   active_sanes: number
   completed_sanes: number

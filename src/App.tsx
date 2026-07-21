@@ -22,6 +22,7 @@ const DeliveriesPage = lazy(() => import('@/features/deliveries/DeliveriesPage')
 const ReportsPage = lazy(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const PortalPage = lazy(() => import('@/features/portal/PortalPage').then((m) => ({ default: m.PortalPage })))
+const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 
 function FullLoader() {
   return (
@@ -34,19 +35,33 @@ function FullLoader() {
 
 /** Solo para usuarios NO autenticados (login/registro). */
 function PublicOnly({ children }: { children: ReactNode }) {
-  const { loading, user, needsOnboarding } = useAuth()
+  const { loading, user, needsOnboarding, isPlatformAdmin } = useAuth()
   if (loading) return <FullLoader />
-  if (user) return <Navigate to={needsOnboarding ? '/bienvenida' : '/'} replace />
+  if (user) {
+    const to = isPlatformAdmin ? '/admin' : needsOnboarding ? '/bienvenida' : '/'
+    return <Navigate to={to} replace />
+  }
   return <>{children}</>
 }
 
 /** Requiere sesión + tenant configurado. */
 function ProtectedLayout() {
-  const { loading, user, needsOnboarding } = useAuth()
+  const { loading, user, needsOnboarding, isPlatformAdmin, tenant } = useAuth()
   if (loading) return <FullLoader />
   if (!user) return <Navigate to="/login" replace />
+  // Super-admin sin negocio propio → su lugar es el panel de plataforma.
+  if (isPlatformAdmin && !tenant) return <Navigate to="/admin" replace />
   if (needsOnboarding) return <Navigate to="/bienvenida" replace />
   return <Layout />
+}
+
+/** Requiere sesión + ser super-admin de plataforma. */
+function PlatformAdminGuard() {
+  const { loading, user, isPlatformAdmin } = useAuth()
+  if (loading) return <FullLoader />
+  if (!user) return <Navigate to="/login" replace />
+  if (!isPlatformAdmin) return <Navigate to="/" replace />
+  return <AdminPage />
 }
 
 /** Paso de onboarding (sesión sin tenant). */
@@ -69,6 +84,9 @@ export default function App() {
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/registro" element={<PublicOnly><RegisterPage /></PublicOnly>} />
         <Route path="/bienvenida" element={<OnboardingGuard />} />
+
+        {/* Panel de plataforma (super-admin, cross-tenant) */}
+        <Route path="/admin" element={<PlatformAdminGuard />} />
 
         {/* App protegida */}
         <Route element={<ProtectedLayout />}>
