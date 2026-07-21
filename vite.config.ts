@@ -49,6 +49,22 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
+            // Chunks JS de carga diferida (rutas lazy, pdf/charts/xlsx) que NO se
+            // precachean. Sin esta regla, offline o tras un deploy fallan al cargar
+            // (404 del hash viejo) → pantalla en blanco. Los nombres llevan hash
+            // (inmutables), así que CacheFirst es seguro; el cache queda acotado.
+            urlPattern: ({ url, request, sameOrigin }) =>
+              request.destination === 'script' &&
+              sameOrigin &&
+              url.pathname.includes('/assets/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-assets',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // Cache GET reads from the Supabase REST/storage layer for basic offline resilience.
             urlPattern: ({ url, request }) =>
               request.method === 'GET' &&
@@ -84,7 +100,12 @@ export default defineConfig({
             id.includes('@tanstack') ||
             id.includes('@supabase') ||
             id.includes('lucide-react') ||
-            id.includes('date-fns')
+            id.includes('date-fns') ||
+            // clsx = base de cn(), usado en cada pantalla. DEBE ir en 'vendor'
+            // (precacheado). Sin esto Rollup lo mete en el chunk 'charts' (que NO
+            // se precachea) y el entry pasa a importarlo estáticamente → offline o
+            // tras un deploy la app no monta → pantalla en blanco antes de React.
+            id.includes('/clsx')
           ) {
             return 'vendor'
           }

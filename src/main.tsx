@@ -7,13 +7,28 @@ import { queryClient } from '@/lib/queryClient'
 import { persister, registerOfflineMutations, resumeIfAuthed } from '@/lib/offline'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { ToastProvider } from '@/components/ui/toast'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Registra los defaults de las mutaciones offline ANTES de montar la app, para
 // que las que estén en cola puedan reanudarse tras recargar.
 registerOfflineMutations(queryClient)
 
+// Si Vite no logra precargar un módulo (típico tras un deploy: el índice apunta a
+// un chunk cuyo hash ya cambió), recarga UNA vez para traer los assets frescos.
+// El guard en sessionStorage (misma clave que lazyWithRetry en App.tsx) evita el
+// bucle de recargas.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault()
+  const KEY = 'misanrd-chunk-reloaded'
+  if (!sessionStorage.getItem(KEY)) {
+    sessionStorage.setItem(KEY, '1')
+    window.location.reload()
+  }
+})
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ErrorBoundary>
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
@@ -40,5 +55,6 @@ createRoot(document.getElementById('root')!).render(
         </ToastProvider>
       </AuthProvider>
     </PersistQueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

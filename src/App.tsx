@@ -1,5 +1,5 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, type ComponentType, type ReactNode } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 import { Layout } from '@/components/Layout'
 import { Logo } from '@/components/Logo'
@@ -10,20 +10,52 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
 import { OnboardingPage } from '@/pages/auth/OnboardingPage'
 
+// Clave del guard anti-bucle de recarga. DEBE coincidir con la de main.tsx.
+const CHUNK_RELOAD_KEY = 'misanrd-chunk-reloaded'
+
+/**
+ * `lazy()` que, si el import() del chunk falla (típico tras un deploy: el service
+ * worker sirve un index.html viejo que apunta a hashes que ya no existen, o red
+ * intermitente), recarga la página UNA vez para traer el HTML/chunks frescos.
+ * El guard en sessionStorage evita un bucle de recargas; si tras recargar sigue
+ * fallando, se propaga al <ErrorBoundary> (pantalla "Algo salió mal" en vez de
+ * blanco). Al cargar bien, limpia el guard.
+ */
+function lazyWithRetry<T extends ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>,
+) {
+  return lazy(() =>
+    factory()
+      .then((m) => {
+        sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+        return m
+      })
+      .catch((err) => {
+        if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+          window.location.reload()
+          // Cuelga hasta que la recarga tome efecto (no resuelve ni rechaza).
+          return new Promise<{ default: T }>(() => {})
+        }
+        throw err
+      }),
+  )
+}
+
 // Rutas de la app protegida: carga diferida (code-splitting) para un bundle liviano.
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
-const SanesListPage = lazy(() => import('@/features/sanes/SanesListPage').then((m) => ({ default: m.SanesListPage })))
-const SanCreatePage = lazy(() => import('@/features/sanes/SanCreatePage').then((m) => ({ default: m.SanCreatePage })))
-const SanDetailPage = lazy(() => import('@/features/sanes/SanDetailPage').then((m) => ({ default: m.SanDetailPage })))
-const ParticipantsPage = lazy(() => import('@/features/participants/ParticipantsPage').then((m) => ({ default: m.ParticipantsPage })))
-const PaymentsPage = lazy(() => import('@/features/payments/PaymentsPage').then((m) => ({ default: m.PaymentsPage })))
-const MorososPage = lazy(() => import('@/features/morosos/MorososPage').then((m) => ({ default: m.MorososPage })))
-const DeliveriesPage = lazy(() => import('@/features/deliveries/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage })))
-const ReportsPage = lazy(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
-const PortalPage = lazy(() => import('@/features/portal/PortalPage').then((m) => ({ default: m.PortalPage })))
-const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
-const AdminTenantDetail = lazy(() => import('@/features/admin/AdminTenantDetail').then((m) => ({ default: m.AdminTenantDetail })))
+const DashboardPage = lazyWithRetry(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const SanesListPage = lazyWithRetry(() => import('@/features/sanes/SanesListPage').then((m) => ({ default: m.SanesListPage })))
+const SanCreatePage = lazyWithRetry(() => import('@/features/sanes/SanCreatePage').then((m) => ({ default: m.SanCreatePage })))
+const SanDetailPage = lazyWithRetry(() => import('@/features/sanes/SanDetailPage').then((m) => ({ default: m.SanDetailPage })))
+const ParticipantsPage = lazyWithRetry(() => import('@/features/participants/ParticipantsPage').then((m) => ({ default: m.ParticipantsPage })))
+const PaymentsPage = lazyWithRetry(() => import('@/features/payments/PaymentsPage').then((m) => ({ default: m.PaymentsPage })))
+const MorososPage = lazyWithRetry(() => import('@/features/morosos/MorososPage').then((m) => ({ default: m.MorososPage })))
+const DeliveriesPage = lazyWithRetry(() => import('@/features/deliveries/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage })))
+const ReportsPage = lazyWithRetry(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
+const SettingsPage = lazyWithRetry(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const PortalPage = lazyWithRetry(() => import('@/features/portal/PortalPage').then((m) => ({ default: m.PortalPage })))
+const AdminPage = lazyWithRetry(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
+const AdminTenantDetail = lazyWithRetry(() => import('@/features/admin/AdminTenantDetail').then((m) => ({ default: m.AdminTenantDetail })))
 
 function FullLoader() {
   return (

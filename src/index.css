@@ -9,12 +9,15 @@
   body {
     @apply bg-slate-50 font-sans text-slate-800 antialiased;
   }
-  /* Evita zoom en iOS al enfocar inputs pequeños */
+  /* Evita el auto-zoom de iOS al enfocar campos <16px. Va con !important porque
+     los componentes (Input/Select/Textarea) aplican la clase `.text-sm` (14px),
+     y en Tailwind v3 una clase gana por especificidad/orden a un selector de
+     elemento; sin !important esta regla no se aplicaría y iOS haría zoom al login. */
   @media (max-width: 640px) {
     input,
     select,
     textarea {
-      font-size: 16px;
+      font-size: 16px !important;
     }
   }
 }
