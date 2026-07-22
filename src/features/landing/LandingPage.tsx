@@ -297,7 +297,7 @@ function Features() {
     {
       icon: UserRound,
       title: 'Portal de participantes',
-      desc: 'Tus miembros ven su historial y sus turnos desde un enlace web privado.',
+      desc: 'Tus clientes ven sus pagos, turnos y recibos desde un enlace web privado, sin instalar nada.',
       tone: 'brand',
     },
     {
@@ -553,7 +553,7 @@ function Pricing() {
             </p>
             <ul className="mt-8 flex-1 space-y-4 text-left">
               {[
-                'Sanes ilimitados',
+                'Vista para tus clientes',
                 'Varios administradores',
                 'Reportes avanzados',
                 'Soporte prioritario',
