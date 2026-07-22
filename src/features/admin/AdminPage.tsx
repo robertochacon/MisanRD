@@ -30,7 +30,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PageLoader, EmptyState, Avatar } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
 import { money, fmtDate } from '@/lib/format'
-import { PLANS, PLAN_ORDER } from '@/lib/constants'
+import { PLANS, PLAN_ORDER, planPriceLabel } from '@/lib/constants'
 import {
   useAdminOverview,
   useAdminTenants,
@@ -336,7 +336,7 @@ function ChangePlanModal({ tenant, onClose }: { tenant: AdminTenantRow | null; o
           <Select value={plan} onChange={(e) => setPlan(e.target.value as PlanCode)}>
             {PLAN_ORDER.map((p) => (
               <option key={p} value={p}>
-                {PLANS[p].name} — RD${PLANS[p].price}/mes
+                {PLANS[p].name} — {planPriceLabel(PLANS[p])}
               </option>
             ))}
           </Select>

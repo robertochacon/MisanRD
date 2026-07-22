@@ -28,8 +28,8 @@ import {
   useRevokeInvite,
 } from '@/hooks/team'
 import { uploadFile } from '@/lib/storage'
-import { PLANS, PLAN_ORDER, PUBLIC_URL } from '@/lib/constants'
-import { money, fmtDate } from '@/lib/format'
+import { PLANS, PLAN_ORDER, PUBLIC_URL, planPriceLabel } from '@/lib/constants'
+import { fmtDate } from '@/lib/format'
 import { openWhatsApp, adminInviteMessage } from '@/lib/whatsapp'
 import { cn } from '@/lib/cn'
 
@@ -182,7 +182,7 @@ export function SettingsPage() {
               <div className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-gold-400" />
                 <span className="text-lg font-bold text-slate-800">{plan.name}</span>
-                <span className="text-slate-400">· {money(plan.price)}/mes</span>
+                <span className="text-slate-400">· {planPriceLabel(plan)}</span>
               </div>
               <ul className="mt-3 space-y-1.5">
                 {plan.features.map((f) => (
@@ -213,7 +213,7 @@ export function SettingsPage() {
                       </p>
                       <p className="text-xs text-slate-500">{p.features[0]}</p>
                     </div>
-                    <span className="font-bold text-brand-600">{money(p.price)}</span>
+                    <span className="font-bold text-brand-600">{planPriceLabel(p)}</span>
                   </div>
                 )
               })}

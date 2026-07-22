@@ -43,7 +43,7 @@ export function ReportsPage() {
 
   const exportExcel = async () => {
     if (!canExcel) {
-      toast.error('Exportar a Excel está disponible en el plan Emprendedora o superior.')
+      toast.error('Exportar a Excel está disponible en el plan Premium.')
       return
     }
     setExporting(true)

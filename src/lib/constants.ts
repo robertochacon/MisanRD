@@ -1,4 +1,5 @@
 import type { PaymentMethod, PlanCode, SanFrequency } from '@/types/db'
+import { money } from '@/lib/format'
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME ?? 'MisanRD'
 export const APP_TAGLINE = 'Tus sans, más fácil'
@@ -49,45 +50,58 @@ export interface PlanInfo {
   features: string[]
 }
 
+/** Unidad de cobro: el plan Premium se cobra POR SAN (ya no es mensual). */
+export const PLAN_PRICE_UNIT = 'por san'
+
 export const PLANS: Record<PlanCode, PlanInfo> = {
   basic: {
     code: 'basic',
     name: 'Básico',
-    price: 300,
+    price: 0, // Gratis
     maxSanes: 2,
     maxParticipants: 30,
-    features: ['2 Sanes', 'Hasta 30 participantes', 'Recibos PDF', 'Reportes'],
+    features: [
+      'Hasta 2 sanes',
+      'Hasta 30 participantes',
+      'Cobros y recibos',
+      'Portal para participantes',
+    ],
   },
+  premium: {
+    code: 'premium',
+    name: 'Premium',
+    price: 300, // RD$300 por san
+    maxSanes: null,
+    maxParticipants: null,
+    features: [
+      'Crea los sanes que necesites',
+      'Participantes ilimitados',
+      'Varios administradores',
+      'Reportes y exportar a Excel',
+      'Recordatorios por WhatsApp',
+      'Portal para tus clientes',
+    ],
+  },
+  // Legacy: ya no se ofrece (hoy solo Básico y Premium). Se conserva la entrada
+  // para no romper tenants creados antes del cambio de planes (el tipo PlanCode
+  // y la DB aún contemplan este código).
   entrepreneur: {
     code: 'entrepreneur',
     name: 'Emprendedora',
     price: 600,
     maxSanes: null,
     maxParticipants: null,
-    features: [
-      'Sanes ilimitados',
-      'Participantes ilimitados',
-      'Recordatorios WhatsApp',
-      'Reportes + PDF',
-      'Exportar a Excel',
-    ],
-  },
-  premium: {
-    code: 'premium',
-    name: 'Premium',
-    price: 900,
-    maxSanes: null,
-    maxParticipants: null,
-    features: [
-      'Todo lo de Emprendedora',
-      'Múltiples administradores',
-      'Branding personalizado',
-      'Respaldo automático',
-    ],
+    features: ['Sanes ilimitados', 'Participantes ilimitados', 'Exportar a Excel'],
   },
 }
 
-export const PLAN_ORDER: PlanCode[] = ['basic', 'entrepreneur', 'premium']
+/** Planes que se ofrecen actualmente. 'entrepreneur' quedó como legacy. */
+export const PLAN_ORDER: PlanCode[] = ['basic', 'premium']
+
+/** Etiqueta de precio de un plan: "Gratis" o "RD$X por san". */
+export function planPriceLabel(plan: PlanInfo): string {
+  return plan.price === 0 ? 'Gratis' : `${money(plan.price)} ${PLAN_PRICE_UNIT}`
+}
 
 /** URL del portal de solo lectura del participante (HashRouter). */
 export function portalUrl(token: string): string {
