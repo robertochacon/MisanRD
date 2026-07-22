@@ -18,10 +18,10 @@ import {
 } from 'lucide-react'
 
 // ────────────────────────────────────────────────────────────────────────────
-// OJO: precio de Premium. La app maneja "plan + límites" (sin pasarela de pago),
-// así que este valor es de MARKETING. Confírmalo/ajústalo antes de desplegar.
+// Precio de Premium: se cobra POR SAN (no mensual). La app maneja "plan +
+// límites" (sin pasarela de pago), así que este valor es de MARKETING.
 const PRECIO_PREMIUM = 'RD$300'
-const PERIODO_PREMIUM = '/mes'
+const UNIDAD_PREMIUM = ' por san'
 // ────────────────────────────────────────────────────────────────────────────
 
 /** Desplaza suavemente a una sección por id (sin tocar el hash del router). */
@@ -112,7 +112,8 @@ function BrandMark({ dark = false }: { dark?: boolean }) {
       <span
         className={`text-lg font-extrabold tracking-tight ${dark ? 'text-white' : 'text-brand-950'}`}
       >
-        Misan<span className={dark ? 'text-gold-400' : 'text-brand-500'}>RD</span>
+        {/* "RD" siempre en azul (en el footer oscuro usa un azul más claro para contraste). */}
+        Misan<span className={dark ? 'text-brand-400' : 'text-brand-500'}>RD</span>
       </span>
     </div>
   )
@@ -548,7 +549,7 @@ function Pricing() {
             <h3 className="text-xl font-bold">Premium</h3>
             <p className="mt-4 text-4xl font-black">
               {PRECIO_PREMIUM}
-              <span className="text-base font-medium text-white/60">{PERIODO_PREMIUM}</span>
+              <span className="text-base font-medium text-white/60">{UNIDAD_PREMIUM}</span>
             </p>
             <ul className="mt-8 flex-1 space-y-4 text-left">
               {[
@@ -597,7 +598,7 @@ function Faq() {
     },
     {
       q: '¿Cuánto cuesta?',
-      a: `Puedes empezar gratis con el plan Básico. Cuando necesites más sanes o administradores, el plan Premium cuesta ${PRECIO_PREMIUM}${PERIODO_PREMIUM}.`,
+      a: `Puedes empezar gratis con el plan Básico. Cuando necesites más sanes o administradores, el plan Premium cuesta ${PRECIO_PREMIUM}${UNIDAD_PREMIUM}.`,
     },
   ]
   return (
