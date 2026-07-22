@@ -11,6 +11,7 @@ import {
   Trash2,
   MessageCircle,
   Lock,
+  Clock,
 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -27,18 +28,35 @@ import {
   useCreateInvite,
   useRevokeInvite,
 } from '@/hooks/team'
+import { useMyPlanRequest, useRequestPlanChange } from '@/hooks/plan'
 import { uploadFile } from '@/lib/storage'
 import { PLANS, PLAN_ORDER, PUBLIC_URL, planPriceLabel } from '@/lib/constants'
 import { fmtDate } from '@/lib/format'
+import { errorMessage } from '@/lib/errors'
 import { openWhatsApp, adminInviteMessage } from '@/lib/whatsapp'
 import { cn } from '@/lib/cn'
+import type { PlanCode } from '@/types/db'
 
 export function SettingsPage() {
-  const { tenant, subscription, plan, refresh } = useAuth()
+  const { tenant, subscription, plan, profile, refresh } = useAuth()
   const update = useUpdateTenant()
+  const myRequest = useMyPlanRequest()
+  const requestPlan = useRequestPlanChange()
   const toast = useToast()
   const [form, setForm] = useState<TenantUpdate>({})
   const [uploading, setUploading] = useState(false)
+
+  const isOwner = profile?.role === 'owner'
+  const pendingRequest = myRequest.data ?? null
+
+  const requestPlanChange = async (code: PlanCode) => {
+    try {
+      await requestPlan.mutateAsync({ plan: code })
+      toast.success(`¡Solicitud de ${PLANS[code].name} enviada! Te contactaremos para activarlo.`)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
 
   useEffect(() => {
     if (tenant) {
@@ -195,28 +213,60 @@ export function SettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader title="Otros planes" subtitle="Para cambiar de plan, contáctanos" />
+            <CardHeader
+              title="Cambiar de plan"
+              subtitle={
+                pendingRequest ? 'Tienes una solicitud en revisión' : 'Solicita el cambio y te contactamos'
+              }
+            />
             <CardBody className="space-y-2">
+              {pendingRequest && (
+                <div className="flex items-start gap-2 rounded-xl border border-gold-200 bg-gold-50 p-3 text-sm text-gold-800">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    Solicitud de <strong>{PLANS[pendingRequest.requested_plan].name}</strong> enviada.
+                    Un administrador la revisará y activará tu plan pronto.
+                  </span>
+                </div>
+              )}
               {PLAN_ORDER.filter((c) => c !== plan.code).map((code) => {
                 const p = PLANS[code]
+                const alreadyRequested = pendingRequest?.requested_plan === code
                 return (
                   <div
                     key={code}
                     className={cn(
-                      'flex items-center justify-between rounded-xl border border-slate-200 p-3',
+                      'flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3',
                     )}
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="flex items-center gap-1.5 font-semibold text-slate-800">
                         {code === 'premium' && <Sparkles className="h-4 w-4 text-gold-400" />}
                         {p.name}
                       </p>
-                      <p className="text-xs text-slate-500">{p.features[0]}</p>
+                      <p className="text-xs text-slate-500">
+                        {planPriceLabel(p)} · {p.features[0]}
+                      </p>
                     </div>
-                    <span className="font-bold text-brand-600">{planPriceLabel(p)}</span>
+                    {isOwner && (
+                      <Button
+                        size="sm"
+                        variant={code === 'premium' ? 'gold' : 'outline'}
+                        loading={requestPlan.isPending && alreadyRequested}
+                        disabled={Boolean(pendingRequest) || requestPlan.isPending}
+                        onClick={() => requestPlanChange(code)}
+                      >
+                        {alreadyRequested ? 'Solicitado' : 'Solicitar'}
+                      </Button>
+                    )}
                   </div>
                 )
               })}
+              {!isOwner && (
+                <p className="text-xs text-slate-500">
+                  Solo la dueña puede solicitar un cambio de plan.
+                </p>
+              )}
             </CardBody>
           </Card>
         </div>

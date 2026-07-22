@@ -207,6 +207,29 @@ export interface PlatformAdminRow {
   created_at: string
 }
 
+/** Solicitud de cambio de plan — vista de la dueña (su propio negocio). */
+export interface MyPlanRequest {
+  id: string
+  requested_plan: PlanCode
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+}
+
+/** Solicitud de cambio de plan — vista del super-admin (cross-tenant). */
+export interface AdminPlanRequestRow {
+  id: string
+  tenant_id: string
+  tenant_name: string
+  requested_plan: PlanCode
+  current_plan: PlanCode | null
+  status: 'pending' | 'approved' | 'rejected'
+  note: string | null
+  created_at: string
+  whatsapp: string | null
+  owner_name: string | null
+  owner_email: string | null
+}
+
 export interface AdminTenantSummary {
   active_sanes: number
   completed_sanes: number

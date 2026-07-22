@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type {
   AdminMember,
   AdminOverview,
+  AdminPlanRequestRow,
   AdminTenantRow,
   AdminTenantSummary,
   MemberRole,
@@ -44,6 +45,33 @@ export function useAdminSetSubscription() {
         p_tenant: args.tenant,
         p_plan: args.plan,
         p_status: args.status ?? null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
+  })
+}
+
+/** Solicitudes de cambio de plan pendientes (todas las cuentas). */
+export function useAdminPlanRequests() {
+  return useQuery({
+    queryKey: ['admin', 'plan-requests'],
+    queryFn: async (): Promise<AdminPlanRequestRow[]> => {
+      const { data, error } = await supabase.rpc('admin_list_plan_requests')
+      if (error) throw error
+      return (data ?? []) as AdminPlanRequestRow[]
+    },
+  })
+}
+
+/** Aprueba (cambia el plan) o rechaza una solicitud de cambio de plan. */
+export function useAdminResolvePlanRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id: string; approve: boolean }) => {
+      const { error } = await supabase.rpc('admin_resolve_plan_request', {
+        p_id: args.id,
+        p_approve: args.approve,
       })
       if (error) throw error
     },

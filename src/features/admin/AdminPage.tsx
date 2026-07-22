@@ -17,6 +17,9 @@ import {
   Play,
   Trash2,
   UserCog,
+  ArrowRight,
+  Sparkles,
+  Check,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthProvider'
 import { Wordmark } from '@/components/Logo'
@@ -30,6 +33,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PageLoader, EmptyState, Avatar } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
 import { money, fmtDate } from '@/lib/format'
+import { errorMessage } from '@/lib/errors'
 import { PLANS, PLAN_ORDER, planPriceLabel } from '@/lib/constants'
 import {
   useAdminOverview,
@@ -43,8 +47,16 @@ import {
   useAdminPlatformAdmins,
   useAdminGrantPlatformAdmin,
   useAdminRevokePlatformAdmin,
+  useAdminPlanRequests,
+  useAdminResolvePlanRequest,
 } from '@/hooks/admin'
-import type { AdminTenantRow, MemberRole, PlanCode, SubscriptionStatus } from '@/types/db'
+import type {
+  AdminPlanRequestRow,
+  AdminTenantRow,
+  MemberRole,
+  PlanCode,
+  SubscriptionStatus,
+} from '@/types/db'
 
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   trial: 'Prueba',
@@ -70,6 +82,8 @@ export function AdminPage() {
   const navigate = useNavigate()
   const overview = useAdminOverview()
   const tenants = useAdminTenants()
+  const planRequests = useAdminPlanRequests()
+  const resolveRequest = useAdminResolvePlanRequest()
   const setSuspended = useAdminSetTenantSuspended()
   const toast = useToast()
   const [query, setQuery] = useState('')
@@ -107,6 +121,24 @@ export function AdminPage() {
     }
   }
 
+  const resolvePlan = async (r: AdminPlanRequestRow, approve: boolean) => {
+    const target = PLANS[r.requested_plan].name
+    if (
+      !window.confirm(
+        approve
+          ? `¿Aprobar y cambiar "${r.tenant_name}" al plan ${target}?`
+          : `¿Rechazar la solicitud de ${target} de "${r.tenant_name}"?`,
+      )
+    )
+      return
+    try {
+      await resolveRequest.mutateAsync({ id: r.id, approve })
+      toast.success(approve ? `Plan cambiado a ${target}.` : 'Solicitud rechazada.')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   return (
     <div className="min-h-[100dvh] bg-slate-50">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -136,6 +168,7 @@ export function AdminPage() {
             onClick={() => {
               overview.refetch()
               tenants.refetch()
+              planRequests.refetch()
             }}
           >
             <RefreshCw className="h-4 w-4" /> Actualizar
@@ -159,6 +192,57 @@ export function AdminPage() {
               </Badge>
             ))}
           </div>
+        )}
+
+        {planRequests.data && planRequests.data.length > 0 && (
+          <Card className="mt-6 border-gold-300">
+            <CardHeader
+              title={`Solicitudes de plan (${planRequests.data.length})`}
+              subtitle="Cuentas que pidieron cambiar de plan"
+              action={
+                <Badge tone="gold" className="gap-1">
+                  <Sparkles className="h-3.5 w-3.5" /> Pendientes
+                </Badge>
+              }
+            />
+            <CardBody className="space-y-2">
+              {planRequests.data.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-800">{r.tenant_name}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {r.owner_name ?? '—'} · {r.owner_email ?? '—'}
+                      {r.whatsapp ? ` · ${r.whatsapp}` : ''}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <Badge tone={planTone(r.current_plan)}>
+                        {r.current_plan ? PLANS[r.current_plan].name : '—'}
+                      </Badge>
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+                      <Badge tone={planTone(r.requested_plan)}>{PLANS[r.requested_plan].name}</Badge>
+                      <span className="text-xs text-slate-400">· {fmtDate(r.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      loading={resolveRequest.isPending}
+                      onClick={() => resolvePlan(r, false)}
+                    >
+                      Rechazar
+                    </Button>
+                    <Button size="sm" loading={resolveRequest.isPending} onClick={() => resolvePlan(r, true)}>
+                      <Check className="h-4 w-4" /> Aprobar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardBody>
+          </Card>
         )}
 
         <div className="mt-6">
