@@ -20,9 +20,11 @@ import { Select, Textarea } from '@/components/ui/Select'
 import { PageLoader, Avatar } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
 import { useParticipants, useCreateParticipant } from '@/hooks/participants'
-import { useCreateSan } from '@/hooks/sanes'
-import { FREQUENCIES } from '@/lib/constants'
+import { useCreateSan, useSanes } from '@/hooks/sanes'
+import { useAuth } from '@/auth/AuthProvider'
+import { FREQUENCIES, PLANS } from '@/lib/constants'
 import { money, fmtDate } from '@/lib/format'
+import { errorMessage } from '@/lib/errors'
 import { buildSchedulePreview, shuffle } from '@/lib/san'
 import { cn } from '@/lib/cn'
 import type { SanFrequency } from '@/types/db'
@@ -31,6 +33,8 @@ export function SanCreatePage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data: participants, isLoading } = useParticipants()
+  const { data: sanes } = useSanes()
+  const { plan } = useAuth()
   const createSan = useCreateSan()
   const createParticipant = useCreateParticipant()
 
@@ -111,12 +115,22 @@ export function SanCreatePage() {
       setNewPhone('')
       toast.success('Participante agregado')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(errorMessage(err))
     }
   }
 
   const submit = async () => {
     if (selected.length < 2) return toast.error('Selecciona al menos 2 participantes')
+    // Guard proactivo del límite de plan (mismo criterio que el trigger de la DB:
+    // cuenta borradores + activos). Evita el error genérico al intentar crear.
+    const activeSanes = (sanes ?? []).filter(
+      (s) => s.status === 'draft' || s.status === 'active',
+    ).length
+    if (plan.maxSanes != null && activeSanes >= plan.maxSanes) {
+      return toast.error(
+        `El plan ${PLANS.basic.name} permite máximo ${plan.maxSanes} sanes activos. Cambia a Premium para crear más.`,
+      )
+    }
     try {
       const id = await createSan.mutateAsync({
         name: name.trim(),
@@ -130,8 +144,9 @@ export function SanCreatePage() {
       toast.success('¡San creado y activado! 🎉')
       navigate(`/sanes/${id}`)
     } catch (err) {
-      const m = err instanceof Error ? err.message : 'Error'
-      toast.error(m.includes('PLAN_LIMIT') ? m.split(':').slice(1).join(':').trim() : m)
+      // errorMessage maneja errores de Supabase (no son instancias de Error) y
+      // limpia el prefijo PLAN_LIMIT_* de los triggers de la DB.
+      toast.error(errorMessage(err))
     }
   }
 

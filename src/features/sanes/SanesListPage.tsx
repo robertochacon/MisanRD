@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, Coins, Users, ChevronRight } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Plus, Coins, Users, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useSanes, type SanListItem } from '@/hooks/sanes'
+import { useAuth } from '@/auth/AuthProvider'
 import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { PageLoader, EmptyState } from '@/components/ui/misc'
+import { useToast } from '@/components/ui/toast'
 import { SanStatusBadge } from '@/components/StatusBadges'
 import { money } from '@/lib/format'
-import { FREQUENCY_LABEL } from '@/lib/constants'
+import { FREQUENCY_LABEL, PLANS } from '@/lib/constants'
 import { cn } from '@/lib/cn'
 import type { SanStatus } from '@/types/db'
 
@@ -21,12 +23,32 @@ const FILTERS: { value: SanStatus | 'all'; label: string }[] = [
 
 export function SanesListPage() {
   const { data, isLoading } = useSanes()
+  const { plan } = useAuth()
+  const toast = useToast()
+  const navigate = useNavigate()
   const [filter, setFilter] = useState<SanStatus | 'all'>('all')
 
   const filtered = useMemo(() => {
     if (filter === 'all') return data ?? []
     return (data ?? []).filter((s) => s.status === filter)
   }, [data, filter])
+
+  // Sanes que cuentan para el límite del plan (mismo criterio que el trigger de
+  // la DB `enforce_san_limit`: cuenta borradores + activos).
+  const activeSanes = useMemo(
+    () => (data ?? []).filter((s) => s.status === 'draft' || s.status === 'active').length,
+    [data],
+  )
+  const atLimit = plan.maxSanes != null && activeSanes >= plan.maxSanes
+  const limitMsg = `El plan ${PLANS.basic.name} permite máximo ${plan.maxSanes} sanes activos. Cambia a Premium para crear más.`
+
+  const handleNew = () => {
+    if (atLimit) {
+      toast.error(limitMsg)
+      return
+    }
+    navigate('/sanes/nuevo')
+  }
 
   if (isLoading) return <PageLoader />
 
@@ -36,13 +58,24 @@ export function SanesListPage() {
         title="Sanes"
         description={`${data?.length ?? 0} en total`}
         action={
-          <Link to="/sanes/nuevo">
-            <Button>
-              <Plus className="h-4 w-4" /> Nuevo San
-            </Button>
-          </Link>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4" /> Nuevo San
+          </Button>
         }
       />
+
+      {atLimit && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-gold-200 bg-gold-50 p-3 text-sm text-gold-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Llegaste al límite del plan {PLANS.basic.name} ({plan.maxSanes} sanes activos).{' '}
+            <Link to="/configuracion" className="font-semibold underline">
+              Cambia a Premium
+            </Link>{' '}
+            para crear más.
+          </span>
+        </div>
+      )}
 
       <div className="mb-4 flex gap-2 overflow-x-auto no-scrollbar">
         {FILTERS.map((f) => (
@@ -66,11 +99,7 @@ export function SanesListPage() {
           icon={<Coins className="h-5 w-5" />}
           title="No hay Sanes aquí"
           description="Crea tu primer San para empezar a organizar los turnos y pagos."
-          action={
-            <Link to="/sanes/nuevo">
-              <Button>Crear San</Button>
-            </Link>
-          }
+          action={<Button onClick={handleNew}>Crear San</Button>}
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
