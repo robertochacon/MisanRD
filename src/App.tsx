@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 import { Layout } from '@/components/Layout'
@@ -56,6 +56,7 @@ const SettingsPage = lazyWithRetry(() => import('@/features/settings/SettingsPag
 const PortalPage = lazyWithRetry(() => import('@/features/portal/PortalPage').then((m) => ({ default: m.PortalPage })))
 const AdminPage = lazyWithRetry(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const AdminTenantDetail = lazyWithRetry(() => import('@/features/admin/AdminTenantDetail').then((m) => ({ default: m.AdminTenantDetail })))
+const LandingPage = lazyWithRetry(() => import('@/features/landing/LandingPage').then((m) => ({ default: m.LandingPage })))
 
 function FullLoader() {
   return (
@@ -98,8 +99,14 @@ function SuspendedScreen() {
 /** Requiere sesión + tenant configurado. */
 function ProtectedLayout() {
   const { loading, user, needsOnboarding, isPlatformAdmin, tenant } = useAuth()
+  const location = useLocation()
   if (loading) return <FullLoader />
-  if (!user) return <Navigate to="/login" replace />
+  // Visitante no autenticado: en la raíz ve la landing pública de marketing;
+  // en cualquier otra ruta protegida se le manda a iniciar sesión.
+  if (!user) {
+    if (location.pathname === '/') return <LandingPage />
+    return <Navigate to="/login" replace />
+  }
   // Super-admin sin negocio propio → su lugar es el panel de plataforma.
   if (isPlatformAdmin && !tenant) return <Navigate to="/admin" replace />
   if (needsOnboarding) return <Navigate to="/bienvenida" replace />
