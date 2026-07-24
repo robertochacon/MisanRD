@@ -69,7 +69,20 @@ export function LoginPage() {
             />
           </div>
         </Field>
-        <Field label="Contraseña" htmlFor="password">
+        {/* Etiqueta + enlace en la misma fila. El <Link> va FUERA del <label>
+            para no contaminar el nombre accesible del campo (que queda "Contraseña"). */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+              Contraseña
+            </label>
+            <Link
+              to="/recuperar"
+              className="text-xs font-medium text-brand-600 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -92,7 +105,7 @@ export function LoginPage() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-        </Field>
+        </div>
         <Button type="submit" size="lg" className="w-full" loading={loading}>
           Entrar
         </Button>

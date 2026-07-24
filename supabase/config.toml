@@ -28,9 +28,16 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-# Site URL del proyecto HOSTED (a donde apuntan los correos de confirmación).
-site_url = "https://robertochacon.github.io/MisanRD/"
+# Site URL del proyecto HOSTED (a donde apuntan los correos por defecto).
+# Es el dominio propio de producción (ver public/CNAME).
+site_url = "https://misanrd.com/"
+# TODO redirectTo usado por la app (recuperación de contraseña, confirmación) debe
+# estar en esta lista o Supabase lo ignora y cae al site_url. Incluye el dominio
+# propio Y el "project page" de GitHub Pages por si se despliega en ambos.
+# IMPORTANTE: esto solo aplica al proyecto hosted tras `supabase config push`.
 additional_redirect_urls = [
+  "https://misanrd.com/",
+  "https://misanrd.com",
   "https://robertochacon.github.io/MisanRD/",
   "https://robertochacon.github.io/MisanRD",
   "http://localhost:5173",

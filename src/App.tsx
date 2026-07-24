@@ -9,6 +9,8 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
 import { OnboardingPage } from '@/pages/auth/OnboardingPage'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 
 // Clave del guard anti-bucle de recarga. DEBE coincidir con la de main.tsx.
 const CHUNK_RELOAD_KEY = 'misanrd-chunk-reloaded'
@@ -142,6 +144,10 @@ export default function App() {
         <Route path="/verifica-correo" element={<VerifyEmailPage />} />
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/registro" element={<PublicOnly><RegisterPage /></PublicOnly>} />
+        <Route path="/recuperar" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
+        {/* Sin guard: el enlace del correo abre una sesión de recuperación, así que
+            el usuario llega aquí "autenticado" y no debe rebotar por PublicOnly. */}
+        <Route path="/restablecer" element={<ResetPasswordPage />} />
         <Route path="/bienvenida" element={<OnboardingGuard />} />
 
         {/* Panel de plataforma (super-admin, cross-tenant) */}

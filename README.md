@@ -56,8 +56,13 @@ npm run icons        # genera íconos PWA/favicon desde MisanRD.png
    ```bash
    supabase functions deploy portal --no-verify-jwt
    ```
-4. En **Authentication → URL Configuration**, agrega tu URL de GitHub Pages
-   (`https://TU-USUARIO.github.io/MisanRD/`) a *Redirect URLs* y *Site URL*.
+4. En **Authentication → URL Configuration**, agrega **todas** las URLs desde las
+   que se abre la app a *Redirect URLs*, y la principal como *Site URL*: el dominio
+   propio (`https://misanrd.com/`), el *project page* de GitHub Pages
+   (`https://TU-USUARIO.github.io/MisanRD/`) y, para desarrollo, `http://localhost:5173`.
+   Ya están declaradas en `supabase/config.toml`; aplícalas con `supabase config push`.
+   ⚠️ Sin esto, el enlace de **recuperación de contraseña** (y el de confirmación)
+   se redirige al *Site URL* en lugar de al origen correcto y el flujo se rompe.
 5. (Opcional) Activa/desactiva la confirmación de correo en **Authentication → Providers → Email**.
 
 **Opción B — local (requiere Docker):**

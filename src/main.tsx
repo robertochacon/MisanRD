@@ -1,3 +1,6 @@
+// PRIMERO: captura el token de los enlaces de recuperación de contraseña antes de
+// que el cliente de Supabase o el HashRouter toquen el fragmento de la URL.
+import '@/lib/recoveryBootstrap'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
